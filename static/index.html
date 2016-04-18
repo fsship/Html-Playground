@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    <title>Playground</title>
+    <script type="text/javascript" src="./ace-builds/src-min/ace.js"></script>
+</head>
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .toolBar {
+        padding-left: 10px;
+        height: 50px;
+        line-height: 50px;
+    }
+
+    .toolBar > * {
+        float: left;
+        margin-left: 5px;
+        height: 100%;
+        min-width: 80px;
+    }
+
+    .area {
+        flex: 1;
+        display: flex;
+        flex-direction: row;
+    }
+
+    .left {
+        flex: 1;
+    }
+
+    .right {
+        flex: 1;
+    }
+</style>
+<body>
+    <div class="toolBar">
+        <span><strong>Playground</strong></span>
+        <div class="ar">
+            <input type="checkbox" id="autoRun"/>
+            <span>AutoRun</span>
+        </div>
+        <button id="run">RUN</button>
+    </div>
+    <div class="area">
+        <div class="left" id="html"></div>
+        <div class="right" id="css"></div>
+    </div>
+    <div class="area">
+        <div class="left" id="javascript"></div>
+        <iframe class="right" id="preview" src="/getHtml">
+
+        </iframe>
+    </div>
+    <script type="text/javascript">
+        var editors = ['html', 'css', 'javascript'].map(function(item) {
+            var s = ace.edit(item);
+            s.getSession().setMode('ace/mode/' + item);
+            s.setTheme("ace/theme/monokai");
+            s.getSession().on('change', function () {
+                var autoRunButton = document.getElementById('autoRun');
+                if (autoRunButton.checked) {
+                    run();
+                }
+            });
+            return s;
+        });
+
+        document.getElementById('run').addEventListener('click', run);
+
+        function run() {
+            var cssStr = editors[1].getValue();
+            var htmlStr = editors[0].getValue();
+            var jsStr = editors[2].getValue();
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/changeHtml', true);
+            xhr.setRequestHeader('Content-type', 'application/json');
+            var data = {
+                css: cssStr,
+                js: jsStr,
+                html: htmlStr
+            };
+            xhr.send(JSON.stringify(data));
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    reloadHtml();
+                }
+            }
+        }
+
+        function reloadHtml() {
+            var frame = document.getElementById('preview');
+            frame.contentWindow.location.reload();
+        }
+    </script>
+</body>
+</html>
